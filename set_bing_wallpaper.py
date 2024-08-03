@@ -100,10 +100,12 @@ if __name__ == "__main__":
     if desire_date > today_str:
         print("The date is beyound today. Please input the date before today.")
         exit()
+    if desire_date == today_str:
+        save_name = "bing_wallpaper" + ".jpg"
+    else:
+        save_name = desire_date + ".jpg"
 
-    save_name = args.desire_date + ".jpg"
     save_name = re.sub(r"-", "_", save_name)
-
     url = "https://bing.wdbyte.com/zh-cn/"  # 替换为你要爬取的网页的URL
     print(f"Desired Date is: {desire_date}")
 
