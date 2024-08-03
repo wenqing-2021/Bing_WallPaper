@@ -8,6 +8,7 @@ import re
 import ctypes
 import ctypes.wintypes as wintypes
 import os
+import argparse
 
 # set the specific path
 # SAVE_PATH = "F:\Pictures\WallPaper"
@@ -36,7 +37,7 @@ def set_windows_desktop_wallpaper(fpath: str) -> bool:
 
     return SPI(SPI_SETDESKWALLPAPER, 0, fpath, SPIF_UPDATEINIFILE)
 
-def download_images(url):  
+def download_images(url, save_name:str = None, date_str:str = None):  
     """  
     下载指定网页上的所有图片并保存到本地文件夹  
   
@@ -49,11 +50,6 @@ def download_images(url):
   
     # 使用BeautifulSoup解析页面  
     soup = BeautifulSoup(response.text, 'html.parser')  
-
-    today = datetime.date.today()
-    data_str = today.today().strftime("%Y-%m-%d")
-    # data_str = "2024-07-05"
-    print(f"Today is: {data_str}")
   
     # 查找所有的图片链接
     img_links = soup.find_all('a', href=re.compile("https://cn.bing.com/"))
@@ -66,14 +62,17 @@ def download_images(url):
     for img in img_links:
         previous_str = re.sub(r"\s+", "", str(img.previous))
         # print(f"{previous_str}, type is {type(previous_str)}")
-        # print(f"{data_str}, type is {type(data_str)}")
-        if data_str == previous_str:
+        # print(f"{date_str}, type is {type(date_str)}")
+        if date_str == previous_str:
             img_url = img.get('href')
             break
 
     # 下载图片  
-    img_name = os.path.join(SAVE_PATH, "bing_wallpaper.jpg")
+    img_name = os.path.join(SAVE_PATH, save_name)
     # print(f"url is {img_url}")
+    if img_url is None:
+        print("No image found.")
+        return
     urlretrieve(img_url, img_name)  
 
     print(f"Downloaded: {img_name}")
@@ -84,6 +83,29 @@ def download_images(url):
 
 
 if __name__ == "__main__":
+    today = datetime.date.today()
+    today_str = today.today().strftime("%Y-%m-%d")
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--desire_date", "-d", type=str, default=today_str, help="The date image you desire. The format is YYYY-MM-DD")
+    args = parser.parse_args()
+
+    # check the date format
+    desire_date = args.desire_date
+    if not re.match(r"\d{4}-\d{2}-\d{2}", desire_date):
+        print("The date format is not correct. Please input the date in format like YYYY-MM-DD")
+        exit()
+    
+    # check the date is not beyound today
+    if desire_date > today_str:
+        print("The date is beyound today. Please input the date before today.")
+        exit()
+
+    save_name = args.desire_date + ".jpg"
+    save_name = re.sub(r"-", "_", save_name)
+
     url = "https://bing.wdbyte.com/zh-cn/"  # 替换为你要爬取的网页的URL
-    image_path = download_images(url)
+    print(f"Desired Date is: {desire_date}")
+
+    image_path = download_images(url, save_name, desire_date)
     set_windows_desktop_wallpaper(image_path)
